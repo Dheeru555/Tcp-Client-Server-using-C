@@ -1,0 +1,95 @@
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <signal.h>
+int main(int argc, char *argv[])
+{
+int simpleSocket = 0;
+int simplePort = 0;
+int returnStatus = 0;
+char buffer[2000] = "";
+char cmd[100];
+const char MESSAGE1[] = "This is a Test String from client side!\n";
+char ch='c';
+char lv;
+struct sockaddr_in simpleServer;
+if (argc != 3)
+{
+fprintf(stderr, "Usage: %s <server> <port>\n", argv[0]);
+exit(1);
+}
+
+simpleSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+if (simpleSocket == -1)
+{
+fprintf(stderr, "Could not create a socket!\n");
+exit(1);
+}
+else
+{
+fprintf(stderr, "Socket created!\n");
+}
+simplePort=atoi(argv[2]);
+bzero(&simpleServer, sizeof(simpleServer));
+simpleServer.sin_family = AF_INET;
+inet_addr(argv[1], &simpleServer.sin_addr.s_addr);
+simpleServer.sin_port = htons(simplePort);
+
+
+returnStatus = connect(simpleSocket, (struct sockaddr *) &simpleServer,
+sizeof(simpleServer));
+
+if (returnStatus == 0)
+{
+fprintf(stderr, "Connect successful!\n");
+}
+else
+{
+fprintf(stderr, "Could not connect to address!\n");
+close(simpleSocket);
+exit(1);
+}
+
+void cleanExit(){exit(0);}
+
+while(ch!='q')
+{
+   printf("Dheeraj--> ");
+   printf("Enter the executable commands with only spaces delimited: ");
+   scanf("%[^\n]s",cmd);
+   printf("Entered the executable commands %s: ",cmd);
+
+returnStatus = send(simpleSocket, cmd, strlen(cmd)+1,0);
+if (returnStatus == -1)
+{
+fprintf(stderr, "Could not send confirmation!\n");
+}
+else {
+printf("Confirmation sent\n");
+}
+
+returnStatus = read(simpleSocket, buffer, sizeof(buffer));
+if ( returnStatus > 0 )
+{
+printf("%d: %s", returnStatus, buffer);
+}
+else
+{
+fprintf(stderr, "Return Status = %d \n", returnStatus);
+}
+
+printf("Enter q to quit or enter any other letter to continue");
+        scanf(" %c",&ch);
+
+        lv=getchar();
+}
+
+
+signal(SIGTERM, cleanExit);
+signal(SIGINT, cleanExit);
+
+
+close(simpleSocket);
+return 0;
+}
